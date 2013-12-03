@@ -19,6 +19,10 @@ public class LocalEvents implements IEventEmitter {
 		registeredSessionListeners = new Hashtable<EventSession, IEventHandler>();
 	}
 	
+	/**
+	 * {@inheritDoc}
+	 * @throws NullPointerException is event is null 
+	 */
 	@Override
 	public void emit(Object event)
 	{
@@ -39,7 +43,7 @@ public class LocalEvents implements IEventEmitter {
 		}
 		
 		// Iterating over general listeners
-		for (IEventHandler handler : getListeners(event)) {
+		for (IEventHandler handler : getListenersForEvent(event)) {
 			handler.handleEvent(handler, this);
 		}
 	}
@@ -49,6 +53,7 @@ public class LocalEvents implements IEventEmitter {
 	 * 
 	 * @param event
 	 * @param source
+	 * @throws NullPointerException if event is null
 	 */
 	public void handleEvent(Object event, IEventEmitter source)
 	{
@@ -61,9 +66,13 @@ public class LocalEvents implements IEventEmitter {
 	 * 
 	 * @param event
 	 * @param handler
+	 * @throws NullPointerException if event is null
 	 */
 	public void bind(Object event, IEventHandler handler) {
-		this.getListeners(event).add(handler);
+		if (event == null) {
+			throw new NullPointerException("Event should not be null");
+		}
+		this.getListenersForEvent(event).add(handler);
 	}
 
 	/**
@@ -71,9 +80,21 @@ public class LocalEvents implements IEventEmitter {
 	 * 
 	 * @param session
 	 * @param handler
+	 * @throws NullPointerException     if session is null
+	 * @throws IllegalArgumentException if session already bound
 	 */
 	public void bind(EventSession session, IEventHandler handler) {
-		throw new UnsupportedOperationException("Not implemented");
+		if (session == null) {
+			throw new NullPointerException("Session should not be null");
+		}
+		if (registeredSessionListeners.containsKey(session)) {
+			throw new IllegalArgumentException("Session already registered");
+		}
+		if (handler == null) {
+			return;
+		}
+		
+		registeredSessionListeners.put(session, handler);
 	}
 
 	/**
@@ -82,9 +103,12 @@ public class LocalEvents implements IEventEmitter {
 	 * @param handler
 	 */
 	public void unbind(IEventHandler handler) {
+		if (handler == null) {
+			return;
+		}
 		if (registeredListeners.size() > 0) {
 			for (Class<Object> cls : registeredListeners.keySet()) {
-				this.getListeners(cls).remove(handler);
+				this.getListenersForClass(cls).remove(handler);
 			}
 		}
 	}
@@ -94,9 +118,13 @@ public class LocalEvents implements IEventEmitter {
 	 * 
 	 * @param event
 	 * @param handler
+	 * @throws NullPointerException if event is null
 	 */
 	public void unbind(Object event, IEventHandler handler) {
-		this.getListeners(event).remove(handler);
+		if (handler == null) {
+			return;
+		}
+		this.getListenersForEvent(event).remove(handler);
 	}
 
 	/**
@@ -115,13 +143,15 @@ public class LocalEvents implements IEventEmitter {
 	 * 
 	 * @param event
 	 * @return
+	 * @throws NullPointerException if event is null
 	 */
-	protected ArrayList<IEventHandler> getListeners(Object event)
+	@SuppressWarnings("unchecked")
+	protected ArrayList<IEventHandler> getListenersForEvent(Object event)
 	{
 		if (event == null) {
 			throw new NullPointerException("Empty event");
 		}
-		return getListeners(event.getClass());
+		return getListenersForClass((Class<Object>) event.getClass());
 	}
 	
 	/**
@@ -130,7 +160,7 @@ public class LocalEvents implements IEventEmitter {
 	 * @param cls
 	 * @return
 	 */
-	protected ArrayList<IEventHandler> getListeners(Class<Object> cls)
+	protected ArrayList<IEventHandler> getListenersForClass(Class<Object> cls)
 	{
 		if (!registeredListeners.containsKey(cls)) {
 			// Creating listeners array
