@@ -3,20 +3,20 @@ package me.gotter.delegation.managers;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
+import me.gotter.delegation.EventEmitterInterface;
+import me.gotter.delegation.EventHandlerInterface;
 import me.gotter.delegation.EventSession;
-import me.gotter.delegation.IEventEmitter;
-import me.gotter.delegation.IEventHandler;
-import me.gotter.delegation.ISessionEvent;
+import me.gotter.delegation.SessionBasedEventInterface;
 
-public class LocalEvents implements IEventEmitter {
+public class LocalEvents implements EventEmitterInterface {
 
-	private Hashtable<Class<Object>, ArrayList<IEventHandler>> registeredListeners;
-	private Hashtable<EventSession, IEventHandler> registeredSessionListeners;
+	private Hashtable<Class<Object>, ArrayList<EventHandlerInterface>> registeredListeners;
+	private Hashtable<EventSession, EventHandlerInterface> registeredSessionListeners;
 	
 	public LocalEvents()
 	{
-		registeredListeners = new Hashtable<Class<Object>, ArrayList<IEventHandler>>();
-		registeredSessionListeners = new Hashtable<EventSession, IEventHandler>();
+		registeredListeners = new Hashtable<Class<Object>, ArrayList<EventHandlerInterface>>();
+		registeredSessionListeners = new Hashtable<EventSession, EventHandlerInterface>();
 	}
 	
 	/**
@@ -32,18 +32,18 @@ public class LocalEvents implements IEventEmitter {
 		}
 		
 		// Looking info registeredSessionListeners
-		if (event instanceof ISessionEvent) {
-			if (registeredSessionListeners.containsKey((ISessionEvent) event)) {
+		if (event instanceof SessionBasedEventInterface) {
+			if (registeredSessionListeners.containsKey((SessionBasedEventInterface) event)) {
 				// Invoking listener
-				registeredSessionListeners.get((ISessionEvent) event).handleEvent(event, this);
+				registeredSessionListeners.get((SessionBasedEventInterface) event).handleEvent(event, this);
 				// Removing listener
-				registeredSessionListeners.remove((ISessionEvent) event);
+				registeredSessionListeners.remove((SessionBasedEventInterface) event);
 				return;
 			}
 		}
 		
 		// Iterating over general listeners
-		for (IEventHandler handler : getListenersForEvent(event)) {
+		for (EventHandlerInterface handler : getListenersForEvent(event)) {
 			handler.handleEvent(handler, this);
 		}
 	}
@@ -55,7 +55,7 @@ public class LocalEvents implements IEventEmitter {
 	 * @param source
 	 * @throws NullPointerException if event is null
 	 */
-	public void handleEvent(Object event, IEventEmitter source)
+	public void handleEvent(Object event, EventEmitterInterface source)
 	{
 		// Ignoring information about source and delegating event
 		this.emit(event);
@@ -68,7 +68,7 @@ public class LocalEvents implements IEventEmitter {
 	 * @param handler
 	 * @throws NullPointerException if event is null
 	 */
-	public void bind(Object event, IEventHandler handler) {
+	public void bind(Object event, EventHandlerInterface handler) {
 		if (event == null) {
 			throw new NullPointerException("Event should not be null");
 		}
@@ -83,7 +83,7 @@ public class LocalEvents implements IEventEmitter {
 	 * @throws NullPointerException     if session is null
 	 * @throws IllegalArgumentException if session already bound
 	 */
-	public void bind(EventSession session, IEventHandler handler) {
+	public void bind(EventSession session, EventHandlerInterface handler) {
 		if (session == null) {
 			throw new NullPointerException("Session should not be null");
 		}
@@ -102,7 +102,7 @@ public class LocalEvents implements IEventEmitter {
 	 * 
 	 * @param handler
 	 */
-	public void unbind(IEventHandler handler) {
+	public void unbind(EventHandlerInterface handler) {
 		if (handler == null) {
 			return;
 		}
@@ -120,7 +120,7 @@ public class LocalEvents implements IEventEmitter {
 	 * @param handler
 	 * @throws NullPointerException if event is null
 	 */
-	public void unbind(Object event, IEventHandler handler) {
+	public void unbind(Object event, EventHandlerInterface handler) {
 		if (handler == null) {
 			return;
 		}
@@ -133,7 +133,7 @@ public class LocalEvents implements IEventEmitter {
 	public void clear() {
 		// Using garbage collector
 		if (registeredListeners.size() > 0) {
-			registeredListeners = new Hashtable<Class<Object>, ArrayList<IEventHandler>>();
+			registeredListeners = new Hashtable<Class<Object>, ArrayList<EventHandlerInterface>>();
 		}
 	}
 
@@ -146,7 +146,7 @@ public class LocalEvents implements IEventEmitter {
 	 * @throws NullPointerException if event is null
 	 */
 	@SuppressWarnings("unchecked")
-	protected ArrayList<IEventHandler> getListenersForEvent(Object event)
+	protected ArrayList<EventHandlerInterface> getListenersForEvent(Object event)
 	{
 		if (event == null) {
 			throw new NullPointerException("Empty event");
@@ -160,11 +160,11 @@ public class LocalEvents implements IEventEmitter {
 	 * @param cls
 	 * @return
 	 */
-	protected ArrayList<IEventHandler> getListenersForClass(Class<Object> cls)
+	protected ArrayList<EventHandlerInterface> getListenersForClass(Class<Object> cls)
 	{
 		if (!registeredListeners.containsKey(cls)) {
 			// Creating listeners array
-			registeredListeners.put(cls, new ArrayList<IEventHandler>());
+			registeredListeners.put(cls, new ArrayList<EventHandlerInterface>());
 		}
 		
 		return registeredListeners.get(cls);

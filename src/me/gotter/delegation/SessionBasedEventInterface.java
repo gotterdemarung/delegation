@@ -4,7 +4,7 @@ package me.gotter.delegation;
  * Interface for events, containing session ID,
  * which is used to identify it
  */
-public interface ISessionEvent 
+public interface SessionBasedEventInterface
 {
 	/**
 	 * Sets session id for event

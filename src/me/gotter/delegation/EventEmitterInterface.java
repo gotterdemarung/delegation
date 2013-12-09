@@ -1,6 +1,6 @@
 package me.gotter.delegation;
 
-public interface IEventEmitter 
+public interface EventEmitterInterface
 {
 	/**
 	 * Emits an event
